@@ -132,3 +132,4 @@ dist
 .pnpm-store
 deploy
 .DS_Store
+.puppeteer
