@@ -1,6 +1,6 @@
 import type { Page } from 'puppeteer-core';
-import { CrawlerError } from '../../CrawlerError.js';
-import type { LoginHandle } from '../../LoginHandle.js';
+import { CrawlerError } from '../../libs/CrawlerError.js';
+import type { LoginHandle } from '../../libs/LoginHandle.js';
 import { FT_LOGIN_SYMBOL } from './FtLoginStrategy.js';
 
 const API_CLIENT_URL = (appId: number) =>

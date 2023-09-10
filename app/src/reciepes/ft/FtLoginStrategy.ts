@@ -1,4 +1,4 @@
-import type { LoginStrategy } from '../../LoginHandle.js';
+import type { LoginStrategy } from '../../libs/LoginHandle.js';
 import type { Page } from 'puppeteer-core';
 
 export const FT_LOGIN_SYMBOL = Symbol('FT');

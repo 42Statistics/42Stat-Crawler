@@ -2,11 +2,10 @@
   "name": "app",
   "version": "0.1.0",
   "description": "simple crawler for 42Stat",
-  "main": "./dist/index.js",
   "type": "module",
   "scripts": {
     "build": "pnpm i && tsc",
-    "start": "node ./dist/index.js",
+    "update:lambda": "node ./dist/updateLambdaSecret.js",
     "lint:peek": "eslint \"{src,apps,libs,test}/**/*.ts\" --cache"
   },
   "keywords": [],
@@ -25,6 +24,7 @@
   "dependencies": {
     "@puppeteer/browsers": "^1.7.0",
     "dotenv": "^16.3.1",
+    "octokit": "^3.1.0",
     "puppeteer-core": "^21.1.1"
   }
 }
