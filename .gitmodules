@@ -1,0 +1,3 @@
+[submodule "env"]
+	path = env
+	url = https://github.com/42Statistics/42Stat-Crawler-env.git
