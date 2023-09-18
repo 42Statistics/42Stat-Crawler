@@ -22,6 +22,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@aws-sdk/client-eventbridge": "^3.409.0",
     "@puppeteer/browsers": "^1.7.0",
     "dotenv": "^16.3.1",
     "octokit": "^3.1.0",
