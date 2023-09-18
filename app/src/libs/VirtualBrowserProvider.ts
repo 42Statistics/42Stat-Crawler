@@ -4,6 +4,12 @@ import * as Puppeteer from 'puppeteer-core';
 import { ByteProgressBar } from './ByteProgressBar.js';
 import { CrawlerError } from './CrawlerError.js';
 
+export type VirtualBrowser = Omit<Puppeteer.Browser, 'close'>;
+
+export type VirtualBrowserProvider = {
+  start: <T>(callback: (browser: VirtualBrowser) => Promise<T>) => Promise<T>;
+};
+
 // eslint-disable-next-line
 export class VirtualBrowserProviderFactory {
   static readonly DEFAULT_INSTALL_OPTION: PuppeteerBrowsers.InstallOptions = {
@@ -40,14 +46,14 @@ export class VirtualBrowserProviderFactory {
       await VirtualBrowserProviderFactory.findCachedBrowser(currOption);
 
     if (cachedBrowser) {
-      return new VirtualBrowserProvider(cachedBrowser);
+      return new VirtualBrowserProviderImpl(cachedBrowser);
     }
 
     const installedBrowser =
       await VirtualBrowserProviderFactory.installBrowser(currOption);
 
     if (installedBrowser) {
-      return new VirtualBrowserProvider(installedBrowser);
+      return new VirtualBrowserProviderImpl(installedBrowser);
     }
 
     throw new CrawlerError(
@@ -105,7 +111,7 @@ export class VirtualBrowserProviderFactory {
   }
 }
 
-class VirtualBrowserProvider {
+class VirtualBrowserProviderImpl implements VirtualBrowserProvider {
   private readonly browser: PuppeteerBrowsers.InstalledBrowser;
 
   constructor(installedBrowser: PuppeteerBrowsers.InstalledBrowser) {

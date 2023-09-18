@@ -1,6 +1,7 @@
 import type { Page } from 'puppeteer-core';
 import { CrawlerError } from '../../libs/CrawlerError.js';
-import type { LoginHandle } from '../../libs/LoginHandle.js';
+import { LoginHandle } from '../../libs/LoginHandle.js';
+import type { VirtualBrowser } from '../../libs/VirtualBrowserProvider.js';
 import { FT_LOGIN_SYMBOL } from './FtLoginStrategy.js';
 
 const API_CLIENT_URL = (appId: number): string =>
@@ -15,20 +16,46 @@ const API_CLIENT_CREDENTIAL_ATTRIBUTE = 'data-clipboard-text';
 
 export class FtApiClientHandle {
   private readonly page: Page;
+  private readonly appId: number;
 
-  constructor(page: Page, loginHandle: LoginHandle) {
+  private constructor({
+    page,
+    loginHandle,
+    appId,
+  }: {
+    page: Page;
+    loginHandle: LoginHandle;
+    appId: number;
+  }) {
     if (!loginHandle.isLogined(FT_LOGIN_SYMBOL)) {
       throw new CrawlerError('42 로그인이 되어있지 않습니다.');
     }
 
     this.page = page;
+    this.appId = appId;
   }
 
-  async getNextSecret(appId: number): Promise<string | undefined> {
-    await this.gotoApiClientPage(appId);
+  static async createInstance({
+    browser,
+    loginHandle,
+    appId,
+  }: {
+    browser: VirtualBrowser;
+    loginHandle: LoginHandle;
+    appId: number;
+  }): Promise<FtApiClientHandle> {
+    const page = await browser.newPage();
+
+    await loginHandle.login(page);
+
+    return new FtApiClientHandle({ page, loginHandle, appId });
+  }
+
+  async getNextSecret(): Promise<string | undefined> {
+    await this.gotoApiClientPage();
 
     const nextSecret = await this.page.$eval(
-      API_CLIENT_NEXT_SECRET_SELECTOR(appId),
+      API_CLIENT_NEXT_SECRET_SELECTOR(this.appId),
       (selected) => {
         if (!selected) {
           return undefined;
@@ -44,8 +71,8 @@ export class FtApiClientHandle {
     return nextSecret ?? undefined;
   }
 
-  async replaceSecret(appId: number): Promise<void> {
-    await this.gotoApiClientPage(appId);
+  async replaceSecret(): Promise<void> {
+    await this.gotoApiClientPage();
 
     try {
       await Promise.all([
@@ -59,11 +86,11 @@ export class FtApiClientHandle {
     }
   }
 
-  private async gotoApiClientPage(appId: number): Promise<void> {
-    if (this.page.url() === API_CLIENT_URL(appId)) {
+  private async gotoApiClientPage(): Promise<void> {
+    if (this.page.url() === API_CLIENT_URL(this.appId)) {
       return;
     }
 
-    await this.page.goto(API_CLIENT_URL(appId));
+    await this.page.goto(API_CLIENT_URL(this.appId));
   }
 }

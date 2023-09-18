@@ -14,6 +14,10 @@ export class LoginHandle {
   }
 
   async login(page: Page): Promise<void> {
+    if (this._isLogined) {
+      return;
+    }
+
     await this.strategy.auth(page);
 
     this._isLogined = true;
