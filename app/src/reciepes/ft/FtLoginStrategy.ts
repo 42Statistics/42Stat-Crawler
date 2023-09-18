@@ -20,7 +20,7 @@ export class FtLoginStrategy implements LoginStrategy {
     this.password = password;
   }
 
-  async auth(page: Page) {
+  async auth(page: Page): Promise<void> {
     await page.goto(FtLoginStrategy.FT_INTRA_URL);
 
     if (

@@ -7,7 +7,7 @@ export class ByteProgressBar {
   private readonly barContentLength: number;
 
   constructor(barContentLength: number) {
-    this.bar = Array(barContentLength + 2);
+    this.bar = Array<string>(barContentLength + 2);
     this.barContentLength = barContentLength;
 
     this.bar[0] = ByteProgressBar.START_CHAR;
@@ -23,7 +23,7 @@ export class ByteProgressBar {
     this.bar.fill(ByteProgressBar.FILL_CHAR, 1, progressBarRate + 1);
 
     process.stdout.write(
-      `\r${this.bar.join('')} ${curr} / ${total} bytes (${percentage}) `
+      `\r${this.bar.join('')} ${curr} / ${total} bytes (${percentage}%) `
     );
 
     if (curr === total) {

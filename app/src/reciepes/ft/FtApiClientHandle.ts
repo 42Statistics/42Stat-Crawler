@@ -3,10 +3,10 @@ import { CrawlerError } from '../../libs/CrawlerError.js';
 import type { LoginHandle } from '../../libs/LoginHandle.js';
 import { FT_LOGIN_SYMBOL } from './FtLoginStrategy.js';
 
-const API_CLIENT_URL = (appId: number) =>
+const API_CLIENT_URL = (appId: number): string =>
   `https://profile.intra.42.fr/oauth/applications/${appId}`;
 
-const API_CLIENT_NEXT_SECRET_SELECTOR = (appId: number) =>
+const API_CLIENT_NEXT_SECRET_SELECTOR = (appId: number): string =>
   `div[data-copy="[data-app-next-secret-${appId}]"]`;
 
 const API_CLIENT_SECRET_REPLACE_BUTTON_SELECTOR = '.rotation-actions > a';
@@ -26,8 +26,6 @@ export class FtApiClientHandle {
 
   async getNextSecret(appId: number): Promise<string | undefined> {
     await this.gotoApiClientPage(appId);
-
-    console.log(this.page.url());
 
     const nextSecret = await this.page.$eval(
       API_CLIENT_NEXT_SECRET_SELECTOR(appId),

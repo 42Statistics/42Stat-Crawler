@@ -19,7 +19,7 @@ export class LoginHandle {
     this._isLogined = true;
   }
 
-  isLogined(loginSymbol: Symbol): boolean {
+  isLogined(loginSymbol: symbol): boolean {
     return loginSymbol === this.strategy.loginSymbol && this._isLogined;
   }
 }

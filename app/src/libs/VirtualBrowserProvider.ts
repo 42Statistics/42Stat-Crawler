@@ -4,6 +4,7 @@ import * as Puppeteer from 'puppeteer-core';
 import { ByteProgressBar } from './ByteProgressBar.js';
 import { CrawlerError } from './CrawlerError.js';
 
+// eslint-disable-next-line
 export class VirtualBrowserProviderFactory {
   static readonly DEFAULT_INSTALL_OPTION: PuppeteerBrowsers.InstallOptions = {
     cacheDir: './.puppeteer',
@@ -50,7 +51,7 @@ export class VirtualBrowserProviderFactory {
     }
 
     throw new CrawlerError(
-      `사용할 수 있는 가상 브라우저가 없습니다. 목표 브라우저 정보: ${currOption.browser}, ${currOption.buildId}`
+      `사용할 수 있는 브라우저가 없습니다. 목표 브라우저 정보: ${currOption.browser}, ${currOption.buildId}`
     );
   }
 
@@ -71,7 +72,7 @@ export class VirtualBrowserProviderFactory {
   private static async installBrowser(
     installOption: PuppeteerBrowsers.InstallOptions
   ): Promise<PuppeteerBrowsers.InstalledBrowser | undefined> {
-    const isDownloadable = PuppeteerBrowsers.canDownload(installOption);
+    const isDownloadable = await PuppeteerBrowsers.canDownload(installOption);
     if (!isDownloadable) {
       return undefined;
     }
@@ -93,6 +94,8 @@ export class VirtualBrowserProviderFactory {
         },
       });
 
+      console.log('설치 완료');
+
       return installedBrowser;
     } catch (e) {
       console.error(e);
@@ -102,22 +105,25 @@ export class VirtualBrowserProviderFactory {
   }
 }
 
-export class VirtualBrowserProvider {
+class VirtualBrowserProvider {
   private readonly browser: PuppeteerBrowsers.InstalledBrowser;
 
   constructor(installedBrowser: PuppeteerBrowsers.InstalledBrowser) {
     this.browser = installedBrowser;
   }
 
-  async start(
-    callback: (browser: Omit<Puppeteer.Browser, 'close'>) => unknown
-  ) {
+  async start<T>(
+    callback: (browser: Omit<Puppeteer.Browser, 'close'>) => Promise<T>
+  ): Promise<T> {
     const browserInstance = await Puppeteer.launch({
+      headless: true,
       executablePath: this.browser.executablePath,
     });
 
-    await callback(browserInstance);
+    const result = await callback(browserInstance);
 
     await browserInstance.close();
+
+    return result;
   }
 }
