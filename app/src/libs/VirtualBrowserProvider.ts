@@ -76,7 +76,8 @@ export class VirtualBrowserProviderFactory {
   }
 
   private static async installBrowser(
-    installOption: PuppeteerBrowsers.InstallOptions
+    installOption: PuppeteerBrowsers.InstallOptions,
+    verbose = false
   ): Promise<PuppeteerBrowsers.InstalledBrowser | undefined> {
     const isDownloadable = await PuppeteerBrowsers.canDownload(installOption);
     if (!isDownloadable) {
@@ -92,7 +93,9 @@ export class VirtualBrowserProviderFactory {
         ...installOption,
         unpack: true,
         downloadProgressCallback: (downloadedBytes, totalBytes) => {
-          this.byteProgressBar.display(downloadedBytes, totalBytes);
+          if (verbose) {
+            this.byteProgressBar.display(downloadedBytes, totalBytes);
+          }
 
           if (downloadedBytes === totalBytes) {
             console.log('압축 해제 중...');
