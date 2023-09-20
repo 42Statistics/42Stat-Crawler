@@ -1,0 +1,48 @@
+name: Lambda Api Secret Update
+
+on:
+  schedule:
+    - cron: '30 20 * * *'
+
+jobs:
+  Update-Lambda-Api-Secret:
+    name: Update Lamdba Api Secret
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      READ_PRIVATE_SUBMODULE_TOKEN: ${{ secrets.READ_PRIVATE_SUBMODULE_TOKEN }}
+
+      WORKING_DIRECTORY: ${{ vars.WORKING_DIRECTORY }}
+
+    # todo: node 20 으로 업데이트 후 node 설치 부분 지워도 됨.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          submodules: true
+          token: ${{ env.READ_PRIVATE_SUBMODULE_TOKEN }}
+
+      - name: Install Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Build
+        # todo: prepare 말고 다른 이름으로 바꿀 것
+        run: |
+          pnpm i
+          pnpm build
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+      - name: Run update
+        run: |
+          pnpm update:lambda
+        working-directory: ${{ env.WORKING_DIRECTORY }}
