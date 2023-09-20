@@ -3,16 +3,8 @@ import * as Eventbridge from '@aws-sdk/client-eventbridge';
 class EventbridgeHandle {
   private readonly eventbridgeClient: Eventbridge.EventBridgeClient;
 
-  constructor(eventbridgeHandle: Eventbridge.EventBridgeClient) {
-    this.eventbridgeClient = eventbridgeHandle;
-  }
-
-  async enableRule(rulename: string): Promise<void> {
-    await this.eventbridgeClient.send(
-      new Eventbridge.EnableRuleCommand({
-        Name: rulename,
-      })
-    );
+  constructor(eventbridgeClient: Eventbridge.EventBridgeClient) {
+    this.eventbridgeClient = eventbridgeClient;
   }
 
   async disableRule(rulename: string): Promise<void> {
