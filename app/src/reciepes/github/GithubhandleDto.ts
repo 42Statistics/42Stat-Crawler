@@ -1,12 +1,68 @@
-export type GithubRepoContentInfo = {
+export type GithubRepoInfo = {
   owner: string;
   repo: string;
+};
+
+export type GithubBranchInfo = GithubRepoInfo & { branch: string };
+
+export type GithubRepoContentInfo = GithubRepoInfo & {
   path: string;
+};
+
+export type GithubWorkflowRunStatus =
+  | 'completed'
+  | 'action_required'
+  | 'cancelled'
+  | 'failure'
+  | 'neutral'
+  | 'skipped'
+  | 'stale'
+  | 'success'
+  | 'timed_out'
+  | 'in_progress'
+  | 'queued'
+  | 'requested'
+  | 'waiting'
+  | 'pending';
+
+export type GithubApiVersionHeader = {
+  headers: {
+    'X-Github-Api-Version': string;
+  };
+};
+
+export const GITHUB_FILEMODE_FILE = '100644';
+export const GITHUB_FILEMODE_EXE = '100755';
+export const GITHUB_FILEMODE_SUBDIR = '040000';
+export const GITHUB_FILEMODE_SUBMODULE = '160000';
+export const GITHUB_FILEMODE_SYMLINK = '120000';
+
+export type GithubFileMode =
+  | typeof GITHUB_FILEMODE_FILE
+  | typeof GITHUB_FILEMODE_EXE
+  | typeof GITHUB_FILEMODE_SUBDIR
+  | typeof GITHUB_FILEMODE_SUBMODULE
+  | typeof GITHUB_FILEMODE_SYMLINK;
+
+export type GithubFileType = 'blob' | 'tree' | 'commit';
+
+export type GithubCommitInput = {
+  message: string;
+  commiter?: {
+    name: string;
+    email: string;
+    date?: string;
+  };
+  author?: {
+    name: string;
+    email: string;
+    date?: string;
+  };
 };
 
 export type GetGithubRepoContentInput = GithubRepoContentInfo;
 
-export type GetGithubRepoContentOutput = {
+export type GetGithubRepoFileContentOutput = {
   name: string;
   path: string;
   sha: string;
@@ -33,15 +89,39 @@ export type GetGithubRepoContentOutput = {
   };
 };
 
-export type UpdateGithubRepoContentInput = GithubRepoContentInfo & {
+// todo: 일반 파일을 기준으로 한 타입 입니다.
+export type UpdateGithubRepoFileContentInput = GithubRepoContentInfo &
+  GithubCommitInput & {
+    sha?: string;
+    content: string;
+  };
+
+export type GetGithubRepoBranchInput = GithubBranchInfo;
+
+export type UpdateGithubTreeInput = GithubRepoInfo & {
+  base_tree: string;
+  tree: {
+    path: string;
+    sha: string;
+    mode: GithubFileMode;
+    type: GithubFileType;
+  }[];
+};
+
+export type CreateGithubCommitInput = GithubRepoInfo &
+  GithubCommitInput & {
+    tree: string;
+    parents: string[];
+  };
+
+export type UpdateGithubHeadRefInput = GithubRepoInfo & {
+  ref: string;
   sha: string;
-  message: string;
-  commiter?: {
-    name: string;
-    email: string;
-  };
-  content: string;
-  headers: {
-    'X-Github-Api-Version': string;
-  };
+  force?: boolean;
+};
+
+export type CreateGithubWorkflowDispatchEvent = GithubRepoInfo & {
+  workflow_id: string;
+  ref: string;
+  inputs?: Record<string, string>;
 };
