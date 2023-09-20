@@ -5,7 +5,7 @@ import { EventbridgeHandleProvider } from './reciepes/aws/EventbridgeHandle.js';
 import { FtApiClientHandle } from './reciepes/ft/FtApiClientHandle.js';
 import { FtLoginStrategy } from './reciepes/ft/FtLoginStrategy.js';
 import { GithubHandle } from './reciepes/github/GithubHandle.js';
-import { replaceApiClientSecret } from './reciepes/stat/replaceApiClientSecret.js';
+import { replaceApiClientSecretString } from './reciepes/stat/replaceApiClientSecretString.js';
 
 const ftUsername = Config.getOrThrow('FT_USERNAME');
 const ftPassword = Config.getOrThrow('FT_PASSWORD');
@@ -79,7 +79,7 @@ const updateLambdaEnvRepoApiSecret = async ({
   });
 
   const newContent = Buffer.from(
-    replaceApiClientSecret(
+    replaceApiClientSecretString(
       GithubHandle.contentToBuffer(contentData).toString(),
       nextSecret
     )

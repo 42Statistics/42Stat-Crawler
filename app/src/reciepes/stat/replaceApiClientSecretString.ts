@@ -1,7 +1,7 @@
 const API_CLIENT_SECRET_KEY = 'API_CLIENT_SECRET';
 const INDEX_NOT_FOUND = -1;
 
-export const replaceApiClientSecret = (
+export const replaceApiClientSecretString = (
   envContent: string,
   newSecret: string
 ): string => {
