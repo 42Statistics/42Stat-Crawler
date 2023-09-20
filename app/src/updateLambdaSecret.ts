@@ -40,7 +40,6 @@ const awsRegion = Config.getOrThrow('AWS_REGION');
 const eventbridgeRulename = Config.getOrThrow('LAMBDA_EVENTBRIDGE_RULENAME');
 
 const main = async (): Promise<void> => {
-  // todo: chrome 없는 환경에서의 작동
   const virtualBrowserProvider =
     await VirtualBrowserProviderFactory.createInstance();
 
@@ -126,12 +125,3 @@ const disableLambdaTrigger = async (): Promise<void> => {
 };
 
 await main();
-
-// todo: pdf
-// const response = await fetch(
-//   'https://cdn.intra.42.fr/pdf/pdf/81270/en.subject.pdf'
-// );
-
-// const content = await response.arrayBuffer();
-
-// await fs.writeFile('./test.pdf', Buffer.from(content));
