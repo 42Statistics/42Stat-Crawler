@@ -54,21 +54,21 @@ export class FtApiClientHandle {
   async getNextSecret(): Promise<string | undefined> {
     await this.gotoApiClientPage();
 
-    const nextSecret = await this.page.$eval(
-      API_CLIENT_NEXT_SECRET_SELECTOR(this.appId),
-      (selected) => {
-        if (!selected) {
-          return undefined;
+    try {
+      const nextSecret = await this.page.$eval(
+        API_CLIENT_NEXT_SECRET_SELECTOR(this.appId),
+        (selected) => {
+          return selected.attributes.getNamedItem(
+            // evaluate 시 scope variable 사용 불가능
+            'data-clipboard-text' satisfies typeof API_CLIENT_CREDENTIAL_ATTRIBUTE
+          )?.textContent;
         }
+      );
 
-        return selected.attributes.getNamedItem(
-          // evaluate 시 scope variable 사용 불가능
-          'data-clipboard-text' satisfies typeof API_CLIENT_CREDENTIAL_ATTRIBUTE
-        )?.textContent;
-      }
-    );
-
-    return nextSecret ?? undefined;
+      return nextSecret ?? undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   async replaceSecret(): Promise<void> {
