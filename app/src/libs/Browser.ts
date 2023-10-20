@@ -4,14 +4,10 @@ import * as Puppeteer from 'puppeteer-core';
 import { ByteProgressBar } from './ByteProgressBar.js';
 import { CrawlerError } from './CrawlerError.js';
 
-export type VirtualBrowser = Omit<Puppeteer.Browser, 'close'>;
-
-export type VirtualBrowserProvider = {
-  start: <T>(callback: (browser: VirtualBrowser) => Promise<T>) => Promise<T>;
-};
+export type Browser = Omit<Puppeteer.Browser, 'close'>;
 
 // eslint-disable-next-line
-export class VirtualBrowserProviderFactory {
+export class BrowserFactory {
   static readonly DEFAULT_INSTALL_OPTION: PuppeteerBrowsers.InstallOptions = {
     cacheDir: './.puppeteer',
     browser: PuppeteerBrowsers.Browser.CHROME,
@@ -20,7 +16,7 @@ export class VirtualBrowserProviderFactory {
 
   private static readonly PROGRESS_BAR_LENGTH = 20;
   private static readonly byteProgressBar = new ByteProgressBar(
-    VirtualBrowserProviderFactory.PROGRESS_BAR_LENGTH
+    BrowserFactory.PROGRESS_BAR_LENGTH
   );
 
   static async getCachedBrowsers(
@@ -29,43 +25,56 @@ export class VirtualBrowserProviderFactory {
     return await PuppeteerBrowsers.getInstalledBrowsers({
       cacheDir: path.resolve(
         cacheDirOption?.cacheDir ??
-          VirtualBrowserProviderFactory.DEFAULT_INSTALL_OPTION.cacheDir
+          BrowserFactory.DEFAULT_INSTALL_OPTION.cacheDir
       ),
     });
   }
 
   static async createInstance(
     installOption?: PuppeteerBrowsers.InstallOptions
-  ): Promise<VirtualBrowserProvider> {
-    const currOption =
-      installOption ?? VirtualBrowserProviderFactory.DEFAULT_INSTALL_OPTION;
+  ): Promise<{
+    browserHandle: Omit<Puppeteer.Browser, 'close'>;
+    [Symbol.asyncDispose]: () => Promise<void>;
+  }> {
+    const currOption = installOption ?? BrowserFactory.DEFAULT_INSTALL_OPTION;
 
     currOption.cacheDir = path.resolve(currOption.cacheDir);
 
-    const cachedBrowser =
-      await VirtualBrowserProviderFactory.findCachedBrowser(currOption);
+    let installedBrowser: PuppeteerBrowsers.InstalledBrowser | undefined =
+      undefined;
+
+    const cachedBrowser = await BrowserFactory.findCachedBrowser(currOption);
 
     if (cachedBrowser) {
-      return new VirtualBrowserProviderImpl(cachedBrowser);
+      installedBrowser = cachedBrowser;
+    } else {
+      installedBrowser = await BrowserFactory.installBrowser(currOption);
     }
 
-    const installedBrowser =
-      await VirtualBrowserProviderFactory.installBrowser(currOption);
-
-    if (installedBrowser) {
-      return new VirtualBrowserProviderImpl(installedBrowser);
+    if (!installedBrowser) {
+      throw new CrawlerError(
+        `사용할 수 있는 브라우저가 없습니다. 목표 브라우저 정보: ${currOption.browser}, ${currOption.buildId}`
+      );
     }
 
-    throw new CrawlerError(
-      `사용할 수 있는 브라우저가 없습니다. 목표 브라우저 정보: ${currOption.browser}, ${currOption.buildId}`
-    );
+    const browserInstance = await Puppeteer.launch({
+      headless: true,
+      executablePath: installedBrowser.executablePath,
+    });
+
+    return {
+      browserHandle: browserInstance,
+      [Symbol.asyncDispose]: async () => {
+        await browserInstance.close();
+      },
+    };
   }
 
   private static async findCachedBrowser(
     installOption: PuppeteerBrowsers.InstallOptions
   ): Promise<PuppeteerBrowsers.InstalledBrowser | undefined> {
     const cachedBrowsers =
-      await VirtualBrowserProviderFactory.getCachedBrowsers(installOption);
+      await BrowserFactory.getCachedBrowsers(installOption);
 
     const targetBrowser = cachedBrowsers.find(
       ({ buildId, browser }) =>
@@ -111,28 +120,5 @@ export class VirtualBrowserProviderFactory {
 
       throw new CrawlerError('다운로드 중 에러가 발생했습니다.');
     }
-  }
-}
-
-class VirtualBrowserProviderImpl implements VirtualBrowserProvider {
-  private readonly browser: PuppeteerBrowsers.InstalledBrowser;
-
-  constructor(installedBrowser: PuppeteerBrowsers.InstalledBrowser) {
-    this.browser = installedBrowser;
-  }
-
-  async start<T>(
-    callback: (browser: Omit<Puppeteer.Browser, 'close'>) => Promise<T>
-  ): Promise<T> {
-    const browserInstance = await Puppeteer.launch({
-      headless: true,
-      executablePath: this.browser.executablePath,
-    });
-
-    const result = await callback(browserInstance);
-
-    await browserInstance.close();
-
-    return result;
   }
 }
