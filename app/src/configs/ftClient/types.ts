@@ -15,6 +15,6 @@ export type FtClientGithubRepoConfig = {
 };
 
 export type ServiceFtClientConfig = {
-  readonly ftClientConfigs: FtClientConfig[];
+  readonly ftClientConfig: FtClientConfig;
   readonly githubConfig: FtClientGithubRepoConfig;
 };

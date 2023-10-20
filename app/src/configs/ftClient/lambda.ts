@@ -2,12 +2,10 @@ import { GITHUB_OWNER } from '../github/github.js';
 import type { ServiceFtClientConfig } from './types.js';
 
 export const LAMBDA_CONFIG: ServiceFtClientConfig = {
-  ftClientConfigs: [
-    {
-      id: 13674,
-      envKey: 'API_CLIENT_SECRET',
-    },
-  ],
+  ftClientConfig: {
+    id: 13674,
+    envKey: 'API_CLIENT_SECRET',
+  },
   githubConfig: {
     main: {
       owner: GITHUB_OWNER,

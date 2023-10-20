@@ -1,4 +1,5 @@
 import { APP_DEV_CONFIG } from './configs/ftClient/app.dev.js';
+import { APP_LOCAL_CONFIG } from './configs/ftClient/app.local.js';
 import {
   APP_PROD_CONFIG,
   APP_PROD_WORKFLOW_ID,
@@ -25,7 +26,12 @@ const FT_USERNAME = getOrThrowEnv('FT_USERNAME');
 const FT_PASSWORD = getOrThrowEnv('FT_PASSWORD');
 
 const updateFtClientSecrets = async (): Promise<void> => {
-  const SERVICE_CONFIGS = [APP_PROD_CONFIG, APP_DEV_CONFIG, LAMBDA_CONFIG];
+  const SERVICE_CONFIGS = [
+    APP_PROD_CONFIG,
+    APP_DEV_CONFIG,
+    APP_LOCAL_CONFIG,
+    LAMBDA_CONFIG,
+  ];
 
   await using browser = await BrowserFactory.createInstance();
 
@@ -37,11 +43,7 @@ const updateFtClientSecrets = async (): Promise<void> => {
   const githubHandle = new GithubHandle(GITHUB_TOKEN);
 
   // #region 다음 42 client secret fetch
-  const ftClientConfigList = SERVICE_CONFIGS.reduce((acc, curr) => {
-    return [...acc, ...curr.ftClientConfigs];
-  }, new Array<FtClientConfig>());
-
-  for (const ftClientConfig of ftClientConfigList) {
+  for (const { ftClientConfig } of SERVICE_CONFIGS) {
     ftClientConfig.nextSecret = await ftApiClientHandle.getNextSecret(
       ftClientConfig.id
     );
@@ -50,15 +52,16 @@ const updateFtClientSecrets = async (): Promise<void> => {
 
   // #region submodule repository 내용을 다음 42 client secret 으로 갱신
   for (const serviceConfig of SERVICE_CONFIGS) {
-    const targetClients = serviceConfig.ftClientConfigs.filter(hasNextSecret);
+    if (!hasNextSecret(serviceConfig.ftClientConfig)) {
+      console.log(
+        `no need to update ${serviceConfig.githubConfig.main.repo}/${serviceConfig.githubConfig.submodule.path}`
+      );
 
-    if (!targetClients.length) {
-      console.log(`no need to update ${serviceConfig.githubConfig.main.repo}`);
       continue;
     }
 
     console.log(
-      `updating submodule of ${serviceConfig.githubConfig.main.repo}`
+      `updating submodule of ${serviceConfig.githubConfig.main.repo}/${serviceConfig.githubConfig.submodule.path}`
     );
 
     const submoduleContentOutput = await githubHandle.getRepoContentRegularFile(
@@ -67,7 +70,7 @@ const updateFtClientSecrets = async (): Promise<void> => {
 
     const newFileString = getNewEnvFileString(
       GithubHandle.contentToBuffer(submoduleContentOutput).toString(),
-      targetClients
+      serviceConfig.ftClientConfig
     );
 
     await githubHandle.updateRepoFileContent({
@@ -80,18 +83,30 @@ const updateFtClientSecrets = async (): Promise<void> => {
   // #endregion
 
   // #region 갱신된 submodule commit hash 로 main repository 에 반영 및 배포
-  if (APP_PROD_CONFIG.ftClientConfigs.find(hasNextSecret) !== undefined) {
-    console.log(`deploying ${APP_PROD_CONFIG.githubConfig.main.repo}`);
+  if (hasNextSecret(APP_PROD_CONFIG.ftClientConfig)) {
+    console.log(
+      `deploying ${APP_PROD_CONFIG.githubConfig.main.repo}/${APP_PROD_CONFIG.githubConfig.main.branch}`
+    );
+
     await deployAppProd(ftApiClientHandle, githubHandle);
   }
 
-  if (APP_DEV_CONFIG.ftClientConfigs.find(hasNextSecret) !== undefined) {
-    console.log(`deploying ${APP_DEV_CONFIG.githubConfig.main.repo}`);
+  if (
+    hasNextSecret(APP_DEV_CONFIG.ftClientConfig) ||
+    hasNextSecret(APP_LOCAL_CONFIG.ftClientConfig)
+  ) {
+    console.log(
+      `deploying ${APP_DEV_CONFIG.githubConfig.main.repo}/${APP_DEV_CONFIG.githubConfig.main.branch}`
+    );
+
     await deployAppDev(ftApiClientHandle, githubHandle);
   }
 
-  if (LAMBDA_CONFIG.ftClientConfigs.find(hasNextSecret) !== undefined) {
-    console.log(`deploying ${LAMBDA_CONFIG.githubConfig.main.repo}`);
+  if (hasNextSecret(LAMBDA_CONFIG.ftClientConfig)) {
+    console.log(
+      `deploying ${LAMBDA_CONFIG.githubConfig.main.repo}/${LAMBDA_CONFIG.githubConfig.main.branch}`
+    );
+
     await deployLambda(ftApiClientHandle, githubHandle);
   }
   // #endregion
@@ -130,17 +145,19 @@ const deployAppProd = async (
     setTimeout(() => resolve(), 7 * 60 * 1000)
   );
 
-  for (const ftClientConfig of APP_PROD_CONFIG.ftClientConfigs) {
-    await ftClientHandle.replaceSecret(ftClientConfig.id);
-  }
+  await ftClientHandle.replaceSecret(APP_PROD_CONFIG.ftClientConfig.id);
 };
 
 const deployAppDev = async (
   ftClientHandle: FtApiClientHandle,
   githubHandle: GithubHandle
 ): Promise<void> => {
-  for (const ftClientConfig of APP_DEV_CONFIG.ftClientConfigs) {
-    await ftClientHandle.replaceSecret(ftClientConfig.id);
+  if (hasNextSecret(APP_DEV_CONFIG.ftClientConfig)) {
+    await ftClientHandle.replaceSecret(APP_DEV_CONFIG.ftClientConfig.id);
+  }
+
+  if (hasNextSecret(APP_LOCAL_CONFIG.ftClientConfig)) {
+    await ftClientHandle.replaceSecret(APP_LOCAL_CONFIG.ftClientConfig.id);
   }
 
   await githubHandle.updateSubmodule({
@@ -157,9 +174,7 @@ const deployLambda = async (
   using eventbridge = createEventbridgeHandle();
   await eventbridge.eventbridgeHandle.disableRule(LAMBDA_EVENTBRIDGE_RULE_NAME);
 
-  for (const ftClientConfig of LAMBDA_CONFIG.ftClientConfigs) {
-    await ftClientHandle.replaceSecret(ftClientConfig.id);
-  }
+  await ftClientHandle.replaceSecret(LAMBDA_CONFIG.ftClientConfig.id);
 
   await githubHandle.updateSubmodule({
     main: LAMBDA_CONFIG.githubConfig.main,
