@@ -1,5 +1,8 @@
 import { APP_DEV_CONFIG } from './configs/ftClient/app.dev.js';
-import { APP_PROD_CONFIG } from './configs/ftClient/app.prod.js';
+import {
+  APP_PROD_CONFIG,
+  APP_PROD_WORKFLOW_ID,
+} from './configs/ftClient/app.prod.js';
 import {
   LAMBDA_CONFIG,
   LAMBDA_EVENTBRIDGE_RULE_NAME,
@@ -112,10 +115,19 @@ const deployAppProd = async (
     message: UPDATE_CLIENT_SECRET_MESSAGE,
   });
 
+  await githubHandle.createWorkflowDispathEvent({
+    owner: APP_PROD_CONFIG.githubConfig.main.owner,
+    repo: APP_PROD_CONFIG.githubConfig.main.repo,
+    ref: APP_PROD_CONFIG.githubConfig.main.ref,
+    workflow_id: APP_PROD_WORKFLOW_ID,
+  });
+
   // code deploy 가 prod app 으로 traffic route 하기 전 까지 대기
   // aws sdk 로는 해당 시점을 특정할 수 없다고 판단했음.
+  console.log('waiting for code deploy...');
+
   await new Promise<void>((resolve) =>
-    setTimeout(() => resolve(), 2 * 60 * 1000)
+    setTimeout(() => resolve(), 7 * 60 * 1000)
   );
 
   for (const ftClientConfig of APP_PROD_CONFIG.ftClientConfigs) {

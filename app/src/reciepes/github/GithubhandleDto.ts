@@ -7,7 +7,7 @@ export type GithubBranchInfo = GithubRepoInfo & { branch: string };
 
 export type GithubRepoContentInfo = GithubRepoInfo & {
   path: string;
-  ref?: string;
+  ref: string;
 };
 
 export type GithubWorkflowRunStatus =

@@ -180,6 +180,12 @@ export class GithubHandle {
     });
   }
 
+  /**
+   *
+   * @description
+   * branch, path 등 다른 곳에서 흔히 사용되던 input 을 그대로 쓰면 오류를 반환 합니다.
+   * 명시적으로 인자를 넘겨주세요.
+   */
   async createWorkflowDispathEvent(
     input: CreateGithubWorkflowDispatchEvent
   ): Promise<void> {

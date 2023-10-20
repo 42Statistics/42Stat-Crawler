@@ -5,7 +5,7 @@ export const APP_PROD_CONFIG: ServiceFtClientConfig = {
   ftClientConfigs: [
     {
       id: 14518,
-      envKey: 'PROD_CLIENT_SECRET',
+      envKey: 'CLIENT_SECRET',
     },
   ],
   githubConfig: {
@@ -25,3 +25,5 @@ export const APP_PROD_CONFIG: ServiceFtClientConfig = {
     },
   },
 };
+
+export const APP_PROD_WORKFLOW_ID = 'deploy-prod.yml';

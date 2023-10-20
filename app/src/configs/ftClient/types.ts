@@ -18,12 +18,3 @@ export type ServiceFtClientConfig = {
   readonly ftClientConfigs: FtClientConfig[];
   readonly githubConfig: FtClientGithubRepoConfig;
 };
-
-/**
- * githubToken
- * env branchInfo
- * env file path
- * commit message
- * main branch info
- * submodule path
- */
