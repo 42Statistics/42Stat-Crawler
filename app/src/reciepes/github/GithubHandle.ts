@@ -1,16 +1,18 @@
 import { Octokit } from 'octokit';
 import { CrawlerError } from '../../libs/CrawlerError.js';
 import {
-  CreateGithubWorkflowDispatchEvent,
+  type CreateGithubWorkflowDispatchEvent,
   GITHUB_FILEMODE_SUBMODULE,
+  type GetGithubRepoContentRegularFileOutput,
   type CreateGithubCommitInput,
   type GetGithubRepoBranchInput,
   type GetGithubRepoContentInput,
-  type GetGithubRepoFileContentOutput,
   type GithubApiVersionHeader,
   type UpdateGithubHeadRefInput,
   type UpdateGithubRepoFileContentInput,
   type UpdateGithubTreeInput,
+  type GetGithubRepoContentSubmoduleOutput,
+  type GithubRepoContentInfo,
 } from './GithubhandleDto.js';
 
 export class GithubHandle {
@@ -40,19 +42,47 @@ export class GithubHandle {
   static contentToBuffer({
     content,
     encoding,
-  }: Pick<GetGithubRepoFileContentOutput, 'content' | 'encoding'>): Buffer {
+  }: Pick<
+    GetGithubRepoContentRegularFileOutput,
+    'content' | 'encoding'
+  >): Buffer {
     return Buffer.from(content, encoding);
   }
 
-  async getRepoFileContentData(
+  async getRepoContentRegularFile(
     input: GetGithubRepoContentInput
-  ): Promise<GetGithubRepoFileContentOutput> {
+  ): Promise<GetGithubRepoContentRegularFileOutput> {
     const response = await this.octokit.request(
       GithubHandle.GET_REPO_CONTENT_URL,
       { ...input, ...GithubHandle.API_VERSION_HEADER }
     );
 
-    return response.data as GetGithubRepoFileContentOutput;
+    const regularFileOutput =
+      response.data as GetGithubRepoContentRegularFileOutput;
+
+    if (regularFileOutput?.type !== 'file') {
+      throw new CrawlerError('regular file 이 아닙니다.');
+    }
+
+    return regularFileOutput;
+  }
+
+  async getRepoContentSubmodule(
+    input: GetGithubRepoContentInput
+  ): Promise<GetGithubRepoContentSubmoduleOutput> {
+    const response = await this.octokit.request(
+      GithubHandle.GET_REPO_CONTENT_URL,
+      { ...input, ...GithubHandle.API_VERSION_HEADER }
+    );
+
+    const submoduleOutput =
+      response.data as GetGithubRepoContentSubmoduleOutput;
+
+    if (submoduleOutput?.type !== 'submodule') {
+      throw new CrawlerError('submodule 이 아닙니다.');
+    }
+
+    return submoduleOutput;
   }
 
   async updateRepoFileContent(
@@ -81,7 +111,7 @@ export class GithubHandle {
     submodule,
     message,
   }: {
-    main: GetGithubRepoBranchInput & { submodulePath: string };
+    main: GetGithubRepoBranchInput & GithubRepoContentInfo;
     submodule: GetGithubRepoBranchInput;
     message: string;
   }): Promise<void> {
@@ -93,7 +123,7 @@ export class GithubHandle {
       base_tree: mainInfo.commit.sha,
       tree: [
         {
-          path: main.submodulePath,
+          path: main.path,
           mode: GITHUB_FILEMODE_SUBMODULE,
           type: 'commit',
           sha: submoduleInfo.commit.sha,

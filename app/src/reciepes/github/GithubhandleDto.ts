@@ -7,6 +7,7 @@ export type GithubBranchInfo = GithubRepoInfo & { branch: string };
 
 export type GithubRepoContentInfo = GithubRepoInfo & {
   path: string;
+  ref?: string;
 };
 
 export type GithubWorkflowRunStatus =
@@ -62,7 +63,7 @@ export type GithubCommitInput = {
 
 export type GetGithubRepoContentInput = GithubRepoContentInfo;
 
-export type GetGithubRepoFileContentOutput = {
+export type GetGithubRepoContentRegularFileOutput = {
   name: string;
   path: string;
   sha: string;
@@ -70,8 +71,8 @@ export type GetGithubRepoFileContentOutput = {
   url: string;
   html_url: string;
   git_url: string;
-  download_url: string;
-  type: string;
+  download_url: string | null;
+  type: 'file';
   content: string;
   /**
    * Between 1-100 MB: Only the raw or object custom media types are supported.
@@ -89,8 +90,27 @@ export type GetGithubRepoFileContentOutput = {
   };
 };
 
+export type GetGithubRepoContentSubmoduleOutput = {
+  name: string;
+  path: string;
+  sha: string;
+  size: number;
+  url: string;
+  html_url: string;
+  git_url: string;
+  download_url: null;
+  type: 'submodule';
+  submodule_git_url: string;
+  _links: {
+    self: string;
+    git: string;
+    html: string;
+  };
+};
+
 // todo: 일반 파일을 기준으로 한 타입 입니다.
-export type UpdateGithubRepoFileContentInput = GithubRepoContentInfo &
+export type UpdateGithubRepoFileContentInput = GithubBranchInfo &
+  GithubRepoContentInfo &
   GithubCommitInput & {
     sha?: string;
     content: string;

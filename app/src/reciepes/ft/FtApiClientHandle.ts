@@ -1,7 +1,7 @@
 import type { Page } from 'puppeteer-core';
 import { CrawlerError } from '../../libs/CrawlerError.js';
 import { LoginHandle } from '../../libs/LoginHandle.js';
-import type { VirtualBrowser } from '../../libs/VirtualBrowserProvider.js';
+import type { Browser } from '../../libs/Browser.js';
 import { FT_LOGIN_SYMBOL } from './FtLoginStrategy.js';
 
 const API_CLIENT_URL = (appId: number): string =>
@@ -16,47 +16,41 @@ const API_CLIENT_CREDENTIAL_ATTRIBUTE = 'data-clipboard-text';
 
 export class FtApiClientHandle {
   private readonly page: Page;
-  private readonly appId: number;
 
   private constructor({
     page,
     loginHandle,
-    appId,
   }: {
     page: Page;
     loginHandle: LoginHandle;
-    appId: number;
   }) {
     if (!loginHandle.isLogined(FT_LOGIN_SYMBOL)) {
       throw new CrawlerError('42 로그인이 되어있지 않습니다.');
     }
 
     this.page = page;
-    this.appId = appId;
   }
 
   static async createInstance({
     browser,
     loginHandle,
-    appId,
   }: {
-    browser: VirtualBrowser;
+    browser: Browser;
     loginHandle: LoginHandle;
-    appId: number;
   }): Promise<FtApiClientHandle> {
     const page = await browser.newPage();
 
     await loginHandle.login(page);
 
-    return new FtApiClientHandle({ page, loginHandle, appId });
+    return new FtApiClientHandle({ page, loginHandle });
   }
 
-  async getNextSecret(): Promise<string | undefined> {
-    await this.gotoApiClientPage();
+  async getNextSecret(appId: number): Promise<string | undefined> {
+    await this.gotoApiClientPage(appId);
 
     try {
       const nextSecret = await this.page.$eval(
-        API_CLIENT_NEXT_SECRET_SELECTOR(this.appId),
+        API_CLIENT_NEXT_SECRET_SELECTOR(appId),
         (selected) => {
           return selected.attributes.getNamedItem(
             // evaluate 시 scope variable 사용 불가능
@@ -71,8 +65,8 @@ export class FtApiClientHandle {
     }
   }
 
-  async replaceSecret(): Promise<void> {
-    await this.gotoApiClientPage();
+  async replaceSecret(appId: number): Promise<void> {
+    await this.gotoApiClientPage(appId);
 
     try {
       await Promise.all([
@@ -86,11 +80,15 @@ export class FtApiClientHandle {
     }
   }
 
-  private async gotoApiClientPage(): Promise<void> {
-    if (this.page.url() === API_CLIENT_URL(this.appId)) {
+  private async gotoApiClientPage(appId: number): Promise<void> {
+    if (this.page.url() === API_CLIENT_URL(appId)) {
       return;
     }
 
-    await this.page.goto(API_CLIENT_URL(this.appId));
+    await this.page.goto(API_CLIENT_URL(appId));
+
+    if (this.page.url() !== API_CLIENT_URL(appId)) {
+      throw new CrawlerError('해당 app id 의 페이지를 찾을 수 없습니다.');
+    }
   }
 }
