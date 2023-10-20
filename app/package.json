@@ -5,8 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm i && tsc",
-    "update:lambda": "node ./dist/updateLambdaSecret.js",
-    "update:dev": "node ./dist/updateDevSecret.js",
+    "start:updateFtClientSecret": "node ./dist/updateFtClientSecrets.js",
     "lint:peek": "eslint \"{src,apps,libs,test}/**/*.ts\" --cache"
   },
   "keywords": [],
