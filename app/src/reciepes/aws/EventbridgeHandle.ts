@@ -1,5 +1,7 @@
 import * as Eventbridge from '@aws-sdk/client-eventbridge';
 
+const AWS_REGION = 'ap-northeast-2';
+
 class EventbridgeHandle {
   private readonly eventbridgeClient: Eventbridge.EventBridgeClient;
 
@@ -16,21 +18,13 @@ class EventbridgeHandle {
   }
 }
 
-export class EventbridgeHandleProvider {
-  private readonly region?: string;
+export const createEventbridgeHandle = () => {
+  const eventbridgeClient = new Eventbridge.EventBridgeClient({
+    region: AWS_REGION,
+  });
 
-  constructor(region?: string) {
-    this.region = region;
-  }
-
-  async start(
-    callback: (eventbridgeHandle: EventbridgeHandle) => unknown
-  ): Promise<void> {
-    const client = new Eventbridge.EventBridgeClient({ region: this.region });
-    const eventbridgeHandle = new EventbridgeHandle(client);
-
-    await callback(eventbridgeHandle);
-
-    client.destroy();
-  }
-}
+  return {
+    eventbridgeHandle: new EventbridgeHandle(eventbridgeClient),
+    [Symbol.dispose]: eventbridgeClient.destroy,
+  };
+};
