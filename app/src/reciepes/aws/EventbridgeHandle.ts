@@ -18,13 +18,16 @@ class EventbridgeHandle {
   }
 }
 
-export const createEventbridgeHandle = () => {
+export const createEventbridgeHandle = (): {
+  eventbridgeHandle: EventbridgeHandle;
+  [Symbol.dispose]: () => void;
+} => {
   const eventbridgeClient = new Eventbridge.EventBridgeClient({
     region: AWS_REGION,
   });
 
   return {
     eventbridgeHandle: new EventbridgeHandle(eventbridgeClient),
-    [Symbol.dispose]: eventbridgeClient.destroy,
+    [Symbol.dispose]: (): void => eventbridgeClient.destroy(),
   };
 };

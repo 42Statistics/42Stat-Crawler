@@ -64,7 +64,7 @@ export class BrowserFactory {
 
     return {
       browserHandle: browserInstance,
-      [Symbol.asyncDispose]: async () => {
+      [Symbol.asyncDispose]: async (): Promise<void> => {
         await browserInstance.close();
       },
     };

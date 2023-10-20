@@ -21,7 +21,7 @@ const UPDATE_CLIENT_SECRET_MESSAGE =
 const FT_USERNAME = getOrThrowEnv('FT_USERNAME');
 const FT_PASSWORD = getOrThrowEnv('FT_PASSWORD');
 
-const updateFtClientSecrets = async () => {
+const updateFtClientSecrets = async (): Promise<void> => {
   const SERVICE_CONFIGS = [APP_PROD_CONFIG, APP_DEV_CONFIG, LAMBDA_CONFIG];
 
   await using browser = await BrowserFactory.createInstance();
@@ -50,8 +50,13 @@ const updateFtClientSecrets = async () => {
     const targetClients = serviceConfig.ftClientConfigs.filter(hasNextSecret);
 
     if (!targetClients.length) {
-      return;
+      console.log(`no need to update ${serviceConfig.githubConfig.main.repo}`);
+      continue;
     }
+
+    console.log(
+      `updating submodule of ${serviceConfig.githubConfig.main.repo}`
+    );
 
     const submoduleContentOutput = await githubHandle.getRepoContentRegularFile(
       serviceConfig.githubConfig.submodule
@@ -63,7 +68,7 @@ const updateFtClientSecrets = async () => {
     );
 
     await githubHandle.updateRepoFileContent({
-      ...APP_PROD_CONFIG.githubConfig.submodule,
+      ...serviceConfig.githubConfig.submodule,
       content: Buffer.from(newFileString),
       message: UPDATE_CLIENT_SECRET_MESSAGE,
       sha: submoduleContentOutput.sha,
@@ -73,15 +78,18 @@ const updateFtClientSecrets = async () => {
 
   // #region 갱신된 submodule commit hash 로 main repository 에 반영 및 배포
   if (APP_PROD_CONFIG.ftClientConfigs.find(hasNextSecret) !== undefined) {
-    deployAppProd(ftApiClientHandle, githubHandle);
+    console.log(`deploying ${APP_PROD_CONFIG.githubConfig.main.repo}`);
+    await deployAppProd(ftApiClientHandle, githubHandle);
   }
 
   if (APP_DEV_CONFIG.ftClientConfigs.find(hasNextSecret) !== undefined) {
-    deployAppDev(ftApiClientHandle, githubHandle);
+    console.log(`deploying ${APP_DEV_CONFIG.githubConfig.main.repo}`);
+    await deployAppDev(ftApiClientHandle, githubHandle);
   }
 
   if (LAMBDA_CONFIG.ftClientConfigs.find(hasNextSecret) !== undefined) {
-    deployLambda(ftApiClientHandle, githubHandle);
+    console.log(`deploying ${LAMBDA_CONFIG.githubConfig.main.repo}`);
+    await deployLambda(ftApiClientHandle, githubHandle);
   }
   // #endregion
 };
@@ -97,7 +105,7 @@ const hasNextSecret = (
 const deployAppProd = async (
   ftClientHandle: FtApiClientHandle,
   githubHandle: GithubHandle
-) => {
+): Promise<void> => {
   await githubHandle.updateSubmodule({
     main: APP_PROD_CONFIG.githubConfig.main,
     submodule: APP_PROD_CONFIG.githubConfig.submodule,
@@ -118,7 +126,7 @@ const deployAppProd = async (
 const deployAppDev = async (
   ftClientHandle: FtApiClientHandle,
   githubHandle: GithubHandle
-) => {
+): Promise<void> => {
   for (const ftClientConfig of APP_DEV_CONFIG.ftClientConfigs) {
     await ftClientHandle.replaceSecret(ftClientConfig.id);
   }
@@ -135,7 +143,7 @@ const deployLambda = async (
   githubHandle: GithubHandle
 ): Promise<void> => {
   using eventbridge = createEventbridgeHandle();
-  eventbridge.eventbridgeHandle.disableRule(LAMBDA_EVENTBRIDGE_RULE_NAME);
+  await eventbridge.eventbridgeHandle.disableRule(LAMBDA_EVENTBRIDGE_RULE_NAME);
 
   for (const ftClientConfig of LAMBDA_CONFIG.ftClientConfigs) {
     await ftClientHandle.replaceSecret(ftClientConfig.id);
