@@ -6,6 +6,7 @@
   "scripts": {
     "build": "pnpm i && tsc",
     "start:updateFtClientSecret": "node ./dist/updateFtClientSecrets.js",
+    "start:updatePdf": "node ./dist/updatePdf.js",
     "lint:peek": "eslint \"{src,apps,libs,test}/**/*.ts\" --cache"
   },
   "keywords": [],

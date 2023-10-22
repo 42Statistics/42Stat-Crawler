@@ -20,8 +20,7 @@ class EventbridgeHandle {
 
 export const createEventbridgeHandle = (): {
   eventbridgeHandle: EventbridgeHandle;
-  [Symbol.dispose]: () => void;
-} => {
+} & Disposable => {
   const eventbridgeClient = new Eventbridge.EventBridgeClient({
     region: AWS_REGION,
   });

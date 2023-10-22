@@ -32,10 +32,11 @@ export class BrowserFactory {
 
   static async createInstance(
     installOption?: PuppeteerBrowsers.InstallOptions
-  ): Promise<{
-    browserHandle: Omit<Puppeteer.Browser, 'close'>;
-    [Symbol.asyncDispose]: () => Promise<void>;
-  }> {
+  ): Promise<
+    {
+      browserHandle: Omit<Puppeteer.Browser, 'close'>;
+    } & AsyncDisposable
+  > {
     const currOption = installOption ?? BrowserFactory.DEFAULT_INSTALL_OPTION;
 
     currOption.cacheDir = path.resolve(currOption.cacheDir);

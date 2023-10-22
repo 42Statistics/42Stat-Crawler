@@ -35,81 +35,89 @@ const updateFtClientSecrets = async (): Promise<void> => {
 
   await using browser = await BrowserFactory.createInstance();
 
-  const ftApiClientHandle = await FtApiClientHandle.createInstance({
-    browser: browser.browserHandle,
-    loginHandle: new LoginHandle(new FtLoginStrategy(FT_USERNAME, FT_PASSWORD)),
-  });
+  {
+    await using ftApiClientHandleInstance =
+      await FtApiClientHandle.createInstance({
+        browser: browser.browserHandle,
+        loginHandle: new LoginHandle(
+          new FtLoginStrategy(FT_USERNAME, FT_PASSWORD)
+        ),
+      });
 
-  const githubHandle = new GithubHandle(GITHUB_TOKEN);
+    const ftApiClientHandle = ftApiClientHandleInstance.ftApiClientHandle;
 
-  // #region 다음 42 client secret fetch
-  for (const { ftClientConfig } of SERVICE_CONFIGS) {
-    ftClientConfig.nextSecret = await ftApiClientHandle.getNextSecret(
-      ftClientConfig.id
-    );
-  }
-  // #endregion
+    const githubHandle = new GithubHandle(GITHUB_TOKEN);
 
-  // #region submodule repository 내용을 다음 42 client secret 으로 갱신
-  for (const serviceConfig of SERVICE_CONFIGS) {
-    if (!hasNextSecret(serviceConfig.ftClientConfig)) {
+    // #region 다음 42 client secret fetch
+    for (const { ftClientConfig } of SERVICE_CONFIGS) {
+      ftClientConfig.nextSecret = await ftApiClientHandle.getNextSecret(
+        ftClientConfig.id
+      );
+    }
+    // #endregion
+
+    // #region submodule repository 내용을 다음 42 client secret 으로 갱신
+    for (const serviceConfig of SERVICE_CONFIGS) {
+      if (!hasNextSecret(serviceConfig.ftClientConfig)) {
+        console.log(
+          `no need to update ${serviceConfig.githubConfig.main.repo}/${serviceConfig.githubConfig.submodule.path}`
+        );
+
+        continue;
+      }
+
       console.log(
-        `no need to update ${serviceConfig.githubConfig.main.repo}/${serviceConfig.githubConfig.submodule.path}`
+        `updating submodule of ${serviceConfig.githubConfig.main.repo}/${serviceConfig.githubConfig.submodule.path}`
       );
 
-      continue;
+      const submoduleContentOutput =
+        await githubHandle.getRepoContentRegularFile(
+          serviceConfig.githubConfig.submodule
+        );
+
+      const newFileString = getNewEnvFileString(
+        GithubHandle.contentToBuffer(submoduleContentOutput).toString(),
+        serviceConfig.ftClientConfig
+      );
+
+      await githubHandle.updateRepoFileContent({
+        ...serviceConfig.githubConfig.submodule,
+        content: Buffer.from(newFileString),
+        message: UPDATE_CLIENT_SECRET_MESSAGE,
+        sha: submoduleContentOutput.sha,
+      });
+    }
+    // #endregion
+
+    // #region 갱신된 submodule commit hash 로 main repository 에 반영 및 배포
+    if (hasNextSecret(APP_PROD_CONFIG.ftClientConfig)) {
+      console.log(
+        `deploying ${APP_PROD_CONFIG.githubConfig.main.repo}/${APP_PROD_CONFIG.githubConfig.main.branch}`
+      );
+
+      await deployAppProd(ftApiClientHandle, githubHandle);
     }
 
-    console.log(
-      `updating submodule of ${serviceConfig.githubConfig.main.repo}/${serviceConfig.githubConfig.submodule.path}`
-    );
+    if (
+      hasNextSecret(APP_DEV_CONFIG.ftClientConfig) ||
+      hasNextSecret(APP_LOCAL_CONFIG.ftClientConfig)
+    ) {
+      console.log(
+        `deploying ${APP_DEV_CONFIG.githubConfig.main.repo}/${APP_DEV_CONFIG.githubConfig.main.branch}`
+      );
 
-    const submoduleContentOutput = await githubHandle.getRepoContentRegularFile(
-      serviceConfig.githubConfig.submodule
-    );
+      await deployAppDev(ftApiClientHandle, githubHandle);
+    }
 
-    const newFileString = getNewEnvFileString(
-      GithubHandle.contentToBuffer(submoduleContentOutput).toString(),
-      serviceConfig.ftClientConfig
-    );
+    if (hasNextSecret(LAMBDA_CONFIG.ftClientConfig)) {
+      console.log(
+        `deploying ${LAMBDA_CONFIG.githubConfig.main.repo}/${LAMBDA_CONFIG.githubConfig.main.branch}`
+      );
 
-    await githubHandle.updateRepoFileContent({
-      ...serviceConfig.githubConfig.submodule,
-      content: Buffer.from(newFileString),
-      message: UPDATE_CLIENT_SECRET_MESSAGE,
-      sha: submoduleContentOutput.sha,
-    });
+      await deployLambda(ftApiClientHandle, githubHandle);
+    }
+    // #endregion
   }
-  // #endregion
-
-  // #region 갱신된 submodule commit hash 로 main repository 에 반영 및 배포
-  if (hasNextSecret(APP_PROD_CONFIG.ftClientConfig)) {
-    console.log(
-      `deploying ${APP_PROD_CONFIG.githubConfig.main.repo}/${APP_PROD_CONFIG.githubConfig.main.branch}`
-    );
-
-    await deployAppProd(ftApiClientHandle, githubHandle);
-  }
-
-  if (
-    hasNextSecret(APP_DEV_CONFIG.ftClientConfig) ||
-    hasNextSecret(APP_LOCAL_CONFIG.ftClientConfig)
-  ) {
-    console.log(
-      `deploying ${APP_DEV_CONFIG.githubConfig.main.repo}/${APP_DEV_CONFIG.githubConfig.main.branch}`
-    );
-
-    await deployAppDev(ftApiClientHandle, githubHandle);
-  }
-
-  if (hasNextSecret(LAMBDA_CONFIG.ftClientConfig)) {
-    console.log(
-      `deploying ${LAMBDA_CONFIG.githubConfig.main.repo}/${LAMBDA_CONFIG.githubConfig.main.branch}`
-    );
-
-    await deployLambda(ftApiClientHandle, githubHandle);
-  }
-  // #endregion
 };
 
 type FtClientConfigWithNextSecret = Required<FtClientConfig>;

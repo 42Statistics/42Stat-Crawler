@@ -37,12 +37,19 @@ export class FtApiClientHandle {
   }: {
     browser: Browser;
     loginHandle: LoginHandle;
-  }): Promise<FtApiClientHandle> {
+  }): Promise<
+    {
+      ftApiClientHandle: FtApiClientHandle;
+    } & AsyncDisposable
+  > {
     const page = await browser.newPage();
 
     await loginHandle.login(page);
 
-    return new FtApiClientHandle({ page, loginHandle });
+    return {
+      ftApiClientHandle: new FtApiClientHandle({ page, loginHandle }),
+      [Symbol.asyncDispose]: async () => await page.close(),
+    };
   }
 
   async getNextSecret(appId: number): Promise<string | undefined> {
