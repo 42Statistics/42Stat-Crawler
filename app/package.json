@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-eventbridge": "^3.409.0",
+    "@aws-sdk/client-secrets-manager": "^3.433.0",
     "@puppeteer/browsers": "^1.7.0",
     "dotenv": "^16.3.1",
     "octokit": "^3.1.0",

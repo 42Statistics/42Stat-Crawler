@@ -1,6 +1,5 @@
 import * as Eventbridge from '@aws-sdk/client-eventbridge';
-
-const AWS_REGION = 'ap-northeast-2';
+import { AWS_REGION } from '../../configs/aws/region.js';
 
 class EventbridgeHandle {
   private readonly eventbridgeClient: Eventbridge.EventBridgeClient;
