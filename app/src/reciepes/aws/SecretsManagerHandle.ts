@@ -1,7 +1,14 @@
 import * as SecretsManager from '@aws-sdk/client-secrets-manager';
 import { AWS_REGION } from '../../configs/aws/region.js';
 
-class SecretsManagerHandle {
+export type SecretsManagerHandle = {
+  putSecretValue: (
+    secretId: string,
+    secrets: Record<string, string>
+  ) => Promise<void>;
+};
+
+class SecretsManagerHandleImpl implements SecretsManagerHandle {
   private readonly secretsManagerClient: SecretsManager.SecretsManagerClient;
 
   constructor(secretsManagerClient: SecretsManager.SecretsManagerClient) {
@@ -22,14 +29,14 @@ class SecretsManagerHandle {
 }
 
 export const createSecretsManagerHandle = (): {
-  secretsManagerHandle: SecretsManagerHandle;
+  secretsManagerHandle: SecretsManagerHandleImpl;
 } & Disposable => {
   const secretsManagerClient = new SecretsManager.SecretsManagerClient({
     region: AWS_REGION,
   });
 
   return {
-    secretsManagerHandle: new SecretsManagerHandle(secretsManagerClient),
+    secretsManagerHandle: new SecretsManagerHandleImpl(secretsManagerClient),
     [Symbol.dispose]: (): void => secretsManagerClient.destroy(),
   };
 };

@@ -8,6 +8,14 @@ class EventbridgeHandle {
     this.eventbridgeClient = eventbridgeClient;
   }
 
+  async enablleRule(rulename: string): Promise<void> {
+    await this.eventbridgeClient.send(
+      new Eventbridge.EnableRuleCommand({
+        Name: rulename,
+      })
+    );
+  }
+
   async disableRule(rulename: string): Promise<void> {
     await this.eventbridgeClient.send(
       new Eventbridge.DisableRuleCommand({
@@ -19,8 +27,7 @@ class EventbridgeHandle {
 
 export const createEventbridgeHandle = (): {
   eventbridgeHandle: EventbridgeHandle;
-  [Symbol.dispose]: () => void;
-} => {
+} & Disposable => {
   const eventbridgeClient = new Eventbridge.EventBridgeClient({
     region: AWS_REGION,
   });
