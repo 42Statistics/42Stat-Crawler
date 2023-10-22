@@ -6,6 +6,7 @@
   "scripts": {
     "build": "pnpm i && tsc",
     "start:updateFtClientSecret": "node ./dist/updateFtClientSecrets.js",
+    "start:updatePdf": "node ./dist/updatePdf.js",
     "lint:peek": "eslint \"{src,apps,libs,test}/**/*.ts\" --cache"
   },
   "keywords": [],
@@ -23,9 +24,11 @@
   },
   "dependencies": {
     "@aws-sdk/client-eventbridge": "^3.409.0",
+    "@aws-sdk/client-s3": "^3.433.0",
     "@aws-sdk/client-secrets-manager": "^3.433.0",
     "@puppeteer/browsers": "^1.7.0",
     "dotenv": "^16.3.1",
+    "mongodb": "^6.2.0",
     "octokit": "^3.1.0",
     "puppeteer-core": "^21.1.1"
   }

@@ -1,0 +1,69 @@
+name: Ft Pdf Update
+
+on:
+  schedule:
+    - cron: '40 19 * * *'
+
+jobs:
+  Update-Ft-Pdf:
+    name: Update Ft Pdf
+    runs-on: ubuntu-22.04
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      CRAWLER_GITHUB_AUTH: ${{ secrets.CRAWLER_GITHUB_AUTH }}
+      READ_PRIVATE_SUBMODULE_TOKEN: ${{ secrets.READ_PRIVATE_SUBMODULE_TOKEN }}
+
+      FT_USERNAME: ${{ secrets.FT_USERNAME }}
+      FT_PASSWORD: ${{ secrets.FT_PASSWORD }}
+
+      TARGET_HOST: ${{ secrets.TARGET_HOST }}
+      TARGET_PORT: ${{ secrets.TARGET_PORT }}
+      FORWARD_KEY: ${{ secrets.FORWARD_KEY }}
+      FORWARD_USER: ${{ secrets.FORWARD_USER }}
+      FORWARD_HOST: ${{ secrets.FORWARD_HOST }}
+      FORWARD_KEY_PATH: ${{ secrets.FORWARD_KEY_PATH }}
+
+      WORKING_DIRECTORY: ${{ vars.WORKING_DIRECTORY }}
+
+    # todo: node 20 으로 업데이트 후 node 설치 부분 지워도 됨.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          submodules: true
+          token: ${{ env.READ_PRIVATE_SUBMODULE_TOKEN }}
+
+      - name: Install Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Build
+        run: |
+          pnpm i
+          pnpm build
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+      - name: Connect SSH Tunnel
+        # todo: ssh master mode 도입 고려
+        run: |
+          echo "${{ env.FORWARD_KEY }}" > ${{ env.FORWARD_KEY_PATH }}
+          chmod 400 ${{ env.FORWARD_KEY_PATH }}
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ env.FORWARD_HOST }} >> ~/.ssh/known_hosts
+          ssh -i ${{ env.FORWARD_KEY_PATH }} -fNL ${{ env.TARGET_PORT }}:${{ env.TARGET_HOST }}:${{ env.TARGET_PORT }} ${{ env.FORWARD_USER }}@${{ env.FORWARD_HOST }}
+          rm -rf ${{ env.FORWARD_KEY_PATH }}
+
+      - name: Run update
+        run: |
+          pnpm start:updatePdf
+        working-directory: ${{ env.WORKING_DIRECTORY }}
