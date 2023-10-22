@@ -1,25 +1,7 @@
-import { GITHUB_OWNER } from '../github/github.js';
-import type { ServiceFtClientConfig } from './types.js';
+import { getOrThrowEnv } from '../../libs/getOrThrowEnv.js';
+import type { FtClientConfig } from './types.js';
 
-export const APP_DEV_CONFIG: ServiceFtClientConfig = {
-  ftClientConfig: {
-    id: 16593,
-    envKey: 'DEV_CLIENT_SECRET',
-  },
-  githubConfig: {
-    main: {
-      owner: GITHUB_OWNER,
-      repo: '42Stat-Backend',
-      branch: 'dev',
-      ref: 'dev',
-      path: 'env',
-    },
-    submodule: {
-      owner: GITHUB_OWNER,
-      repo: '42Stat-Backend-env',
-      path: '.env.dev',
-      branch: 'dev',
-      ref: 'dev',
-    },
-  },
+export const APP_DEV_CONFIG: FtClientConfig = {
+  id: 16593,
+  awsSecretId: getOrThrowEnv('AWS_DEV_FT_CLIENT_SECRET_ID'),
 };
