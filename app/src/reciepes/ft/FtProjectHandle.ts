@@ -6,6 +6,7 @@ import { Browser } from '../../libs/Browser.js';
 import { PROJECT_URL_BY_ID } from '../../configs/ftProject/project.js';
 
 const PROJECT_PDF_SELECTOR = '.attachment-name > a';
+const PROJECT_PDF_NAME = 'subject.pdf';
 
 export class FtProjectHandle {
   private readonly page: Page;
@@ -65,8 +66,11 @@ export class FtProjectHandle {
       pdfUrl = await this.page.$$eval(
         PROJECT_PDF_SELECTOR,
         (attachments) =>
-          attachments.find((attachment) => attachment.text === 'subject.pdf')
-            ?.href
+          attachments.find(
+            (attachment) =>
+              attachment.text === PROJECT_PDF_NAME ||
+              attachment.href.endsWith(PROJECT_PDF_NAME)
+          )?.href
       );
 
       if (!pdfUrl) {
