@@ -68,15 +68,19 @@ export class FtProjectHandle {
         (attachments) =>
           attachments.find(
             (attachment) =>
-              attachment.text === PROJECT_PDF_NAME ||
-              attachment.href.endsWith(PROJECT_PDF_NAME)
+              attachment.text ===
+                ('subject.pdf' satisfies typeof PROJECT_PDF_NAME) ||
+              attachment.href.endsWith(
+                'subject.pdf' satisfies typeof PROJECT_PDF_NAME
+              )
           )?.href
       );
 
       if (!pdfUrl) {
         return undefined;
       }
-    } catch {
+    } catch (e) {
+      console.error(e);
       return undefined;
     }
 
