@@ -46,11 +46,10 @@ export class FtProjectHandle {
     };
   }
 
-  async getPdf(projectId: number): Promise<
+  async getPdfInfo(projectId: number): Promise<
     | {
         id: number;
-        projectId: number;
-        content: Buffer;
+        url: string;
       }
     | undefined
   > {
@@ -84,13 +83,6 @@ export class FtProjectHandle {
       return undefined;
     }
 
-    const contentResponse = await fetch(pdfUrl);
-    if (!contentResponse.ok) {
-      return;
-    }
-
-    const content = Buffer.from(await contentResponse.arrayBuffer());
-
     const pdfId = pdfUrl
       .split('/')
       .map((str) => parseInt(str))
@@ -102,8 +94,7 @@ export class FtProjectHandle {
 
     return {
       id: pdfId,
-      projectId,
-      content,
+      url: pdfUrl,
     };
   }
 }
