@@ -10,6 +10,32 @@ class S3Handle {
     this.s3Client = s3Client;
   }
 
+  async checkObjectAccessOk({
+    bucket,
+    key,
+  }: {
+    bucket: string;
+    key?: string;
+  }): Promise<boolean> {
+    try {
+      const response = await this.s3Client.send(
+        new S3.HeadObjectCommand({
+          Bucket: bucket,
+          Key: key,
+        })
+      );
+
+      if (response.$metadata.httpStatusCode !== 200) {
+        return false;
+      }
+
+      return true;
+    } catch {
+      // not found 같은 경우 exception 발생이 되기 때문에 아래와 같이 처리함
+      return false;
+    }
+  }
+
   async putObject({
     path,
     content,

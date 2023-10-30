@@ -24,22 +24,40 @@ const updatePdf = async (): Promise<void> => {
 
     using s3 = createS3Handle();
 
-    const projectIdCursor = mongo.mongoHandle
+    const projectIds = await mongo.mongoHandle
       .db()
       .collection(MONGO_CONFIG.projectsCollection)
-      .find<DocumentWithId>({}, { projection: { id: 1 } });
+      .find<DocumentWithId>({}, { projection: { id: 1 } })
+      .map((doc) => doc.id)
+      .toArray();
 
-    for await (const { id: projectId } of projectIdCursor) {
-      const pdf =
-        await ftProjectHandleInstance.ftProjectHandle.getPdf(projectId);
+    for (const projectId of projectIds) {
+      const pdfInfo =
+        await ftProjectHandleInstance.ftProjectHandle.getPdfInfo(projectId);
 
-      if (!pdf) {
+      if (!pdfInfo) {
         continue;
       }
 
+      const isExist = await s3.s3Handle.checkObjectAccessOk({
+        bucket: S3_CONFIG.bucketName,
+        key: S3_CONFIG.pdfPath(projectId, pdfInfo.id),
+      });
+
+      if (isExist) {
+        continue;
+      }
+
+      const pdfContentResponse = await fetch(pdfInfo.url);
+      if (!pdfContentResponse.ok) {
+        continue;
+      }
+
+      const pdfContent = Buffer.from(await pdfContentResponse.arrayBuffer());
+
       await s3.s3Handle.putObject({
-        path: S3_CONFIG.pdfPathById(pdf.id),
-        content: pdf.content,
+        path: S3_CONFIG.pdfPath(projectId, pdfInfo.id),
+        content: pdfContent,
         contentType: 'application/pdf',
         cache: { enable: true },
       });
@@ -53,7 +71,7 @@ const updatePdf = async (): Promise<void> => {
           },
           {
             $set: {
-              [MONGO_CONFIG.pdfUrlField]: APP_PDF_URL(pdf.id),
+              [MONGO_CONFIG.pdfUrlField]: APP_PDF_URL(projectId, pdfInfo.id),
             },
           }
         );
