@@ -23,9 +23,7 @@ export class FtLoginStrategy implements LoginStrategy {
   async auth(page: Page): Promise<void> {
     await page.goto(FtLoginStrategy.FT_INTRA_URL);
 
-    if (
-      page.url().startsWith(FtLoginStrategy.FT_INTRA_AUTH_URL) === undefined
-    ) {
+    if (!page.url().startsWith(FtLoginStrategy.FT_INTRA_AUTH_URL)) {
       return;
     }
 
