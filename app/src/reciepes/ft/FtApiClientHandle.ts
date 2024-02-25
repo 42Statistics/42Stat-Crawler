@@ -64,9 +64,13 @@ export class FtApiClientHandle {
 
       return nextSecret ?? undefined;
     } catch (e) {
-      console.error(e);
+      if (e instanceof Error) {
+        console.error(e.message);
+      }
 
-      throw e;
+      console.log(`${this.page.url()}: get secret failed.`);
+
+      return undefined;
     }
   }
 
