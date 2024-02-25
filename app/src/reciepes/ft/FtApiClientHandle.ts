@@ -70,6 +70,8 @@ export class FtApiClientHandle {
 
       console.log(`${this.page.url()}: get secret failed.`);
 
+      console.log(await this.page.content());
+
       return undefined;
     }
   }

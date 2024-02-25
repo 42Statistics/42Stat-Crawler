@@ -1,6 +1,8 @@
 import * as PuppeteerBrowsers from '@puppeteer/browsers';
 import path from 'path';
 import * as Puppeteer from 'puppeteer-core';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { ByteProgressBar } from './ByteProgressBar.js';
 import { CrawlerError } from './CrawlerError.js';
 
@@ -58,10 +60,12 @@ export class BrowserFactory {
       );
     }
 
-    const browserInstance = await Puppeteer.launch({
-      headless: true,
-      executablePath: installedBrowser.executablePath,
-    });
+    const browserInstance = await puppeteer.default
+      .use(StealthPlugin())
+      .launch({
+        headless: true,
+        executablePath: installedBrowser.executablePath,
+      });
 
     return {
       browserHandle: browserInstance,
