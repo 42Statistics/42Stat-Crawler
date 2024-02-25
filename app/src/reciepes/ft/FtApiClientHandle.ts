@@ -63,8 +63,10 @@ export class FtApiClientHandle {
       );
 
       return nextSecret ?? undefined;
-    } catch {
-      return undefined;
+    } catch (e) {
+      console.error(e);
+
+      throw e;
     }
   }
 
