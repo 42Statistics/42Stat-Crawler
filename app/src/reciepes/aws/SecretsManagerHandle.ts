@@ -2,6 +2,10 @@ import * as SecretsManager from '@aws-sdk/client-secrets-manager';
 import { AWS_REGION } from '../../configs/aws/region.js';
 
 export type SecretsManagerHandle = {
+  getSecretValue: (
+    secretId: string
+  ) => Promise<Record<string, string> | undefined>;
+
   putSecretValue: (
     secretId: string,
     secrets: Record<string, string>
@@ -13,6 +17,22 @@ class SecretsManagerHandleImpl implements SecretsManagerHandle {
 
   constructor(secretsManagerClient: SecretsManager.SecretsManagerClient) {
     this.secretsManagerClient = secretsManagerClient;
+  }
+
+  async getSecretValue(
+    secretId: string
+  ): Promise<Record<string, string> | undefined> {
+    const result = await this.secretsManagerClient.send(
+      new SecretsManager.GetSecretValueCommand({
+        SecretId: secretId,
+      })
+    );
+
+    if (!result.SecretString) {
+      return undefined;
+    }
+
+    return JSON.parse(result.SecretString) as Record<string, string>;
   }
 
   async putSecretValue(

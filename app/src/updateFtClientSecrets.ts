@@ -29,12 +29,9 @@ const SERVICE_CONFIGS = [
   {
     config: APP_PROD_CONFIG,
     deployFn: async ({
-      ftApiClientHandle,
       secretsManagerHandle,
       nextSecret,
     }: AwsDeployableArguments): Promise<void> => {
-      await ftApiClientHandle.replaceSecret(APP_PROD_CONFIG.ftClientConfig.id);
-
       await deployByAwsSecretsManager({
         secretsManagerHandle,
         deployConfig: APP_PROD_CONFIG.deployConfig,
@@ -45,12 +42,9 @@ const SERVICE_CONFIGS = [
   {
     config: APP_DEV_CONFIG,
     deployFn: async ({
-      ftApiClientHandle,
       secretsManagerHandle,
       nextSecret,
     }: AwsDeployableArguments): Promise<void> => {
-      await ftApiClientHandle.replaceSecret(APP_DEV_CONFIG.ftClientConfig.id);
-
       await deployByAwsSecretsManager({
         secretsManagerHandle,
         deployConfig: APP_DEV_CONFIG.deployConfig,
@@ -61,12 +55,9 @@ const SERVICE_CONFIGS = [
   {
     config: APP_LOCAL_CONFIG,
     deployFn: async ({
-      ftApiClientHandle,
       secretsManagerHandle,
       nextSecret,
     }: AwsDeployableArguments): Promise<void> => {
-      await ftApiClientHandle.replaceSecret(APP_LOCAL_CONFIG.ftClientConfig.id);
-
       await deployByAwsSecretsManager({
         secretsManagerHandle,
         deployConfig: APP_LOCAL_CONFIG.deployConfig,
@@ -77,7 +68,6 @@ const SERVICE_CONFIGS = [
   {
     config: LAMBDA_CONFIG,
     deployFn: async ({
-      ftApiClientHandle,
       secretsManagerHandle,
       nextSecret,
     }: {
@@ -89,8 +79,6 @@ const SERVICE_CONFIGS = [
       await eventbridge.eventbridgeHandle.disableRule(
         LAMBDA_EVENTBRIDGE_RULE_NAME
       );
-
-      await ftApiClientHandle.replaceSecret(LAMBDA_CONFIG.ftClientConfig.id);
 
       await deployByAwsSecretsManager({
         secretsManagerHandle,
