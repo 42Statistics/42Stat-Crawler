@@ -70,8 +70,6 @@ export class FtApiClientHandle {
 
       console.log(`${this.page.url()}: get secret failed.`);
 
-      console.log(await this.page.content());
-
       return undefined;
     }
   }
@@ -99,6 +97,8 @@ export class FtApiClientHandle {
     await this.page.goto(API_CLIENT_URL(appId));
 
     if (this.page.url() !== API_CLIENT_URL(appId)) {
+      console.log(this.page.url());
+
       throw new CrawlerError('해당 app id 의 페이지를 찾을 수 없습니다.');
     }
   }

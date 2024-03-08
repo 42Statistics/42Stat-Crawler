@@ -75,6 +75,8 @@ const updatePdf = async (): Promise<void> => {
             },
           }
         );
+
+      console.log(`update pdf url for project id: ${projectId}`);
     }
   }
 };
