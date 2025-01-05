@@ -3,6 +3,7 @@ name: Ft Pdf Update
 on:
   schedule:
     - cron: '40 19 * * *'
+  workflow_dispatch:
 
 permissions:
   id-token: write   # This is required for requesting the JWT
