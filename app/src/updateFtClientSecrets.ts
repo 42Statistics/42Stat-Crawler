@@ -111,6 +111,8 @@ const updateFtClientSecrets = async (): Promise<void> => {
 
     // #region 다음 42 client secret fetch
     for (const { config, deployFn } of SERVICE_CONFIGS) {
+      console.log(`checking ${config.ftClientConfig.id}`);
+
       const nextSecret = await ftApiClientHandle.getNextSecret(
         config.ftClientConfig.id
       );
@@ -131,8 +133,12 @@ const updateFtClientSecrets = async (): Promise<void> => {
       } as const;
 
       await deployFn(deployArgs);
+
+      console.log('deploy done');
     }
   }
+
+  console.log('done');
 };
 
 await updateFtClientSecrets();
