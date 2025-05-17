@@ -139,6 +139,7 @@ const updateFtClientSecrets = async (): Promise<void> => {
   }
 
   console.log('done');
+  process.exit(0);
 };
 
 await updateFtClientSecrets();

@@ -56,7 +56,7 @@ export class FtProjectHandle {
     try {
       await this.page.goto(PROJECT_URL_BY_ID(projectId));
 
-      if (this.page.url().includes(PROJECT_URL_BY_ID(projectId))) {
+      if (!this.page.url().includes(PROJECT_URL_BY_ID(projectId))) {
         throw new CrawlerError('프로젝트 페이지로 이동 실패');
       }
     } catch (e) {
